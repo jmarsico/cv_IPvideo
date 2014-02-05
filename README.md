@@ -1,9 +1,9 @@
-#H1
-cv_IPvideo
-==========
+
+#Computer Vision on IP Camera Video
 
 openframeworks ofxCv with ofxIpVideoGrabber... initial prototype for traffic cam analyzation. 
 
+###Built For
 Research for Cognitive Video Class
 Professor Yang Cai
 Electrical and Computer Engineering Department
