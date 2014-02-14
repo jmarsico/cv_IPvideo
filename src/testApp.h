@@ -3,8 +3,8 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "IPVideoGrabber.h"
-#include "ofxXmlSettings.h"
 #include "ofxOpenCv.h"
+#include "ofxGui.h"
 //#include "cv.h"
 //#include "highgui.h"
 //#include <opencv2/core/core.hpp>
@@ -25,6 +25,9 @@ public:
 	void update();
 	void draw();
 	void keyPressed(int key);
+    void mouseDragged(int x, int y, int button);
+	void mousePressed(int x, int y, int button);
+	void mouseReleased(int x, int y, int button);
 	
     
     //ofxCV declarations
@@ -39,14 +42,12 @@ public:
     
     SharedIPVideoGrabber grabber;
     ofImage grabFrame;
-    int backgroundThresh;
-    //ofPixels greyFrame;
+    //int backgroundThresh;
     
+    ofxIntSlider backgroundThresh;
+    ofxIntSlider minArea;
+    ofxIntSlider maxArea;
+    ofxIntSlider contourThresh;
+    ofxPanel gui;
     
-    
-    // This message occurs when the incoming video stream image size changes.
-    // This can happen if the IPCamera has a single broadcast state (some cheaper IPCams do this)
-    // and that broadcast size is changed by another user.
-   // void videoResized(const void* sender, ofResizeEventArgs& arg);
-
 };
