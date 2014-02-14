@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>89880B4A-A645-4B2D-A085-21E940E151E8</string>
+	<key>IDESourceControlProjectName</key>
+	<string>ofApp</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>B044F392-9C74-467A-96DB-9FB62A1F3D51</key>
+		<string>https://github.com/kylemcdonald/ofxCv.git</string>
+		<key>E66255BC-B6C8-4080-81A9-5EA4B2DFBABF</key>
+		<string>https://github.com/jmarsico/cv_IPvideo.git</string>
+		<key>EF0486A2-96F7-46FB-A288-686E8A5F74EF</key>
+		<string>https://github.com/bakercp/ofxIpVideoGrabber.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>ofApp.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>B044F392-9C74-467A-96DB-9FB62A1F3D51</key>
+		<string>../../../../../addons/ofxCv</string>
+		<key>E66255BC-B6C8-4080-81A9-5EA4B2DFBABF</key>
+		<string>../..</string>
+		<key>EF0486A2-96F7-46FB-A288-686E8A5F74EF</key>
+		<string>../../../../../addons/ofxIpVideoGrabber</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/jmarsico/cv_IPvideo.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>E66255BC-B6C8-4080-81A9-5EA4B2DFBABF</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>E66255BC-B6C8-4080-81A9-5EA4B2DFBABF</string>
+			<key>IDESourceControlWCCName</key>
+			<string>cv_IPvideo</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>B044F392-9C74-467A-96DB-9FB62A1F3D51</string>
+			<key>IDESourceControlWCCName</key>
+			<string>ofxCv</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>EF0486A2-96F7-46FB-A288-686E8A5F74EF</string>
+			<key>IDESourceControlWCCName</key>
+			<string>ofxIpVideoGrabber</string>
+		</dict>
+	</array>
+</dict>
+</plist>
