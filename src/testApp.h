@@ -5,18 +5,9 @@
 #include "IPVideoGrabber.h"
 #include "ofxOpenCv.h"
 #include "ofxGui.h"
-//#include "cv.h"
-//#include "highgui.h"
-//#include <opencv2/core/core.hpp>
-
-
-
-
 
 using ofx::Video::IPVideoGrabber;
 using ofx::Video::SharedIPVideoGrabber;
-
-
 
 
 class testApp : public ofBaseApp {
@@ -34,7 +25,7 @@ public:
 	float threshold;
 	//ofVideoPlayer movie;
 	ofxCv::ContourFinder contourFinder;
-	bool showLabels;
+	bool bShowVideos;
     
     ofxCv::RunningBackground background;
     ofImage thresholded;
@@ -42,12 +33,28 @@ public:
     
     SharedIPVideoGrabber grabber;
     ofImage grabFrame;
-    //int backgroundThresh;
+    float* grabH;
+    float* grabW;
     
+   
     ofxIntSlider backgroundThresh;
     ofxIntSlider minArea;
     ofxIntSlider maxArea;
-    ofxIntSlider contourThresh;
+    ofxIntSlider blurAmount;
+    ofxIntSlider erodeAmount;
+    ofxIntSlider dilateAmount;
+    ofxIntSlider learningTime;
+    ofxButton reset;
+    ofxIntSlider yLoc;
+    ofxIntSlider boxSize;
+    ofxToggle bShowGrid;
     ofxPanel gui;
+    
+    
+    //variables for lights
+    vector <int> brights;
+    int numLEDs;
+    int cellSize;
+
     
 };

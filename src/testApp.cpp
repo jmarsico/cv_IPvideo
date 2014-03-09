@@ -2,10 +2,10 @@
  <streams>
  
  <stream url="http://148.61.142.228/axis-cgi/mjpg/video.cgi?resolution=320x240"/>
- <stream url="http://82.79.176.85:8081/axis-cgi/mjpg/video.cgi?resolution=320x240"/>
+ **<stream url="http://82.79.176.85:8081/axis-cgi/mjpg/video.cgi?resolution=320x240"/>
  <stream url="http://81.8.151.136:88/axis-cgi/mjpg/video.cgi?resolution=320x240"/>
  <stream url="http://216.8.159.21/axis-cgi/mjpg/video.cgi?resolution=320x240"/>
- <stream url="http://kassertheatercam.montclair.edu/axis-cgi/mjpg/video.cgi?resolution=320x240"/>
+ **<stream url="http://kassertheatercam.montclair.edu/axis-cgi/mjpg/video.cgi?resolution=320x240"/>
  <stream url="http://213.77.33.2:8080/axis-cgi/mjpg/video.cgi?resolution=320x240"/>
  <stream url="http://81.20.148.158/anony/mjpg.cgi"/>
  <stream url="http://173.167.157.229/anony/mjpg.cgi"/>
@@ -37,23 +37,42 @@ void testApp::setup() {
 	ofSetLogLevel(OF_LOG_VERBOSE);
     ofSetVerticalSync(true);
 	ofBackground(100);
-    //ofSetFrameRate(30);
     
-    gui.setup("panel");
-    gui.add(backgroundThresh.setup("thresh", 100, 0, 255));
-    
-    gui.setPosition(650, 680);
-    thresholded.allocate(640, 480, OF_IMAGE_COLOR);
-	
-    //cam.initGrabber(320, 240);
     
     //initialize connection
     grabber = IPVideoGrabber::makeShared();
-
-    grabber->setCameraName("cam1");
-    grabber->setURI("http://82.79.176.85:8081/axis-cgi/mjpg/video.cgi?resolution=320x240");
-    grabber->connect();
     
+    while(grabber->isConnected()==false)
+    {
+        ofLog() << "connecting...";
+        grabber->setCameraName("cam1");
+        grabber->setURI("http://82.79.176.85:8081/axis-cgi/mjpg/video.cgi?resolution=320x240");
+        grabber->connect();
+        
+    }
+    
+    ofLog() << "connection made!";
+    ofLog() << "width: " << grabber->getWidth();
+    ofLog() << "height: " << grabber->getHeight();
+    
+        
+    gui.setup("panel");
+    gui.add(backgroundThresh.setup("bgThresh", 21, 0, 255));
+    gui.add(minArea.setup("minArea", 10,1, 100));
+    gui.add(maxArea.setup("maxArea", 100, 101, 200));
+    gui.add(blurAmount.setup("blur", 10, 1, 100));
+    gui.add(erodeAmount.setup("erode", 0, 0, 10));
+    gui.add(dilateAmount.setup("dilate", 0, 0, 10));
+    gui.add(learningTime.setup("learnTime", 50, 30, 2000));
+    gui.add(reset.setup("reset background"));
+    gui.add(yLoc.setup("yLoc", 270, 0, 288));
+    gui.add(boxSize.setup("box size", 58, 10, 100));
+    gui.add(bShowGrid.setup("showGrid",true));
+    
+    gui.setPosition(ofGetWidth()-275, ofGetHeight()-375);
+    
+    thresholded.allocate(grabber->getWidth(), grabber->getHeight(), OF_IMAGE_COLOR);
+	
 	contourFinder.setMinAreaRadius(1);
     contourFinder.setMaxAreaRadius(100);
 	contourFinder.setThreshold(200);
@@ -65,9 +84,15 @@ void testApp::setup() {
     
     background.setLearningTime(50);
     background.setThresholdValue(200);
-
 	
-	showLabels = true;
+	bShowVideos = false;
+    
+    numLEDs = 20;
+    
+    for(int i = 0; i < numLEDs; i++)
+    {
+        brights.push_back(0);
+    }
     
     
      
@@ -79,33 +104,75 @@ void testApp::setup() {
 void testApp::update() {
 	// update the cameras
     grabber->update();
+    ofLog() << "width: " << grabber->getWidth();
+    ofLog() << "height: " << grabber->getHeight();
     
+    contourFinder.setMinAreaRadius(minArea);
+    contourFinder.setMaxAreaRadius(maxArea);
+    background.setLearningTime(learningTime);
+    background.setThresholdValue(backgroundThresh);
+    
+    
+    int erodeNum = erodeAmount;
+    int dilateNum = dilateAmount;
+    
+    if(reset)
+    {
+        background.reset();
+    }
     
     
     
     grabFrame.setFromPixels(grabber->getPixels(), grabber->getWidth(), grabber->getHeight(), OF_IMAGE_COLOR);
+    grabFrame.resize(384, 288);
     
-    grabFrame.resize(640, 480);
     
-    
-   // backgroundThresh = ofMap(mouseX, 0, ofGetWidth(), 0, 255);
-    if(backgroundThresh < 1)
-    {
+    // backgroundThresh = ofMap(mouseX, 0, ofGetWidth(), 0, 255);
+    if(backgroundThresh < 1){
         backgroundThresh = 0;
-    }
-    if(backgroundThresh > 254)
-    {
+    }if(backgroundThresh > 254){
         backgroundThresh = 255;
     }
     
-    background.setThresholdValue(backgroundThresh);
+    //get the thresholded frame from background function
     background.update(grabFrame, thresholded);
     thresholded.update();
     
-    blur(thresholded, 10);
-    contourFinder.setThreshold(ofMap(mouseX, 0, ofGetWidth(), 0, 255));
+    //manipulate thresholded image before contour finder
+    dilate(thresholded, dilateNum);
+    erode(thresholded, erodeNum);
+    blur(thresholded, blurAmount);
+    
+    
     contourFinder.findContours(thresholded);
     ofLog() << "number contours: " << contourFinder.size();
+    
+    
+    numLEDs = 20;
+    cellSize = grabber->getWidth()/numLEDs;
+    
+    
+    if(grabber->isFrameNew())
+    {
+        for(int i = 0; i < numLEDs; i++)
+        {
+            int shift = i*cellSize;
+            int total = 0;
+            for(int x = shift; x < cellSize+shift; x++)
+            {
+                for(int y = yLoc; y < cellSize+yLoc; y++)
+                {
+                    total = total + thresholded.getColor(x, y).getBrightness();
+                    
+                }
+            }
+            
+            brights[i]  = (total / (cellSize * cellSize)) * 2;
+            brights[i] = ofClamp(brights[i], 0, 255);
+            ofLog() << i << ": " << brights[i];
+        }
+    }
+
     
   
 }
@@ -114,97 +181,88 @@ void testApp::update() {
 //------------------------------------------------------------------------------
 void testApp::draw() {
     
-    gui.draw();
-	ofSetBackgroundAuto(showLabels);
-	RectTracker& tracker = contourFinder.getTracker();
-	ofSetColor(255);
     
-	if(showLabels) {
-        grabFrame.draw(0,10);
-        thresholded.draw(grabFrame.getWidth()+10, 10);
-        //grabber->draw(grabFrame.getWidth()+10, grabFrame.getHeight()+20);
-		ofSetColor(0, 244, 0);
+    if(bShowVideos){
+        gui.draw();
+        RectTracker& tracker = contourFinder.getTracker();
+        ofSetColor(255);
+        
+        
+        ofPushMatrix();
+            ofTranslate(10, 10);
+            grabFrame.draw(0,0); //draw the video from the ofImage
+            thresholded.draw(grabFrame.getWidth()+10, 0);  //draw the binary mask next to it
+        
+            if(bShowGrid)
+            {
+                ofSetColor(0,128);
+                for(int i = 0; i< numLEDs*cellSize; i+=cellSize)
+                {
+                    ofLine(i,0,i,grabber->getHeight());
+                    if(i < grabber->getHeight())
+                    {
+                        ofLine(0,i,grabber->getWidth(),i);
+                    }
+                }
+                ofSetColor(255,0,0,40);
+                ofRect(0, yLoc, grabber->getWidth(), cellSize);
+            }
+            ofDrawBitmapString(ofToString(ofGetFrameRate()), 20, grabber->getHeight()+20);
+        ofPopMatrix();
+
+        
+        
+        ofSetColor(0, 244, 0);
         ofPushMatrix();
             ofTranslate(0,10);
             contourFinder.draw();
             for(int i = 0; i < contourFinder.size(); i++) {
                 ofPoint center = toOf(contourFinder.getCenter(i));
                 ofPushMatrix();
-                ofTranslate(center.x, center.y);
-                int label = contourFinder.getLabel(i);
-                string msg = ofToString(label) + ":" + ofToString(tracker.getAge(label));
-                ofDrawBitmapString(msg, 0, 0);
-                ofVec2f velocity = toOf(contourFinder.getVelocity(i));
-                ofScale(5, 5);
-                ofLine(0, 0, velocity.x, velocity.y);
+                    ofSetColor(255,0,0);
+                    ofTranslate(center.x, center.y);
+                    int label = contourFinder.getLabel(i);
+                    string msg = ofToString(i) + ":" + ofToString(tracker.getAge(label));
+                    ofDrawBitmapString(msg, 0, 0);
+                    ofVec2f velocity = toOf(contourFinder.getVelocity(i));
+                    ofScale(5, 5);
+                    ofLine(0, 0, velocity.x, velocity.y);
                 ofPopMatrix();
             
-		}
+        }
         ofPopMatrix();
-         
-         
-	}
-    else {
-		for(int i = 0; i < contourFinder.size(); i++) {
-			unsigned int label = contourFinder.getLabel(i);
-			// only draw a line if this is not a new label
-			if(tracker.existsPrevious(label)) {
-				// use the label to pick a random color
-				ofSeedRandom(label << 24);
-				ofSetColor(ofColor::fromHsb(ofRandom(255), 255, 255));
-				// get the tracked object (cv::Rect) at current and previous position
-				const cv::Rect& previous = tracker.getPrevious(label);
-				const cv::Rect& current = tracker.getCurrent(label);
-				// get the centers of the rectangles
-				ofVec2f previousPosition(previous.x + previous.width / 2, previous.y + previous.height / 2);
-				ofVec2f currentPosition(current.x + current.width / 2, current.y + current.height / 2);
-				ofLine(previousPosition, currentPosition);
-			}
-		}
-	}
-	
-	// this chunk of code visualizes the creation and destruction of labels
-	const vector<unsigned int>& currentLabels = tracker.getCurrentLabels();
-	const vector<unsigned int>& previousLabels = tracker.getPreviousLabels();
-	const vector<unsigned int>& newLabels = tracker.getNewLabels();
-	const vector<unsigned int>& deadLabels = tracker.getDeadLabels();
-	ofSetColor(cyanPrint);
-	for(int i = 0; i < currentLabels.size(); i++) {
-		int j = currentLabels[i];
-		ofLine(j, 0, j, 4);
-	}
-	ofSetColor(magentaPrint);
-	for(int i = 0; i < previousLabels.size(); i++) {
-		int j = previousLabels[i];
-		ofLine(j, 4, j, 8);
-	}
-	ofSetColor(yellowPrint);
-	for(int i = 0; i < newLabels.size(); i++) {
-		int j = newLabels[i];
-		ofLine(j, 8, j, 12);
-	}
-	ofSetColor(ofColor::white);
-	for(int i = 0; i < deadLabels.size(); i++) {
-		int j = deadLabels[i];
-		ofLine(j, 12, j, 16);
-	}
+           
+        // finally, a report:
+        ofSetColor(0,255,0);
+        stringstream reportStr;
+            reportStr
+            << "press ' ' to show label viz" << endl
+            << "threshold " << backgroundThresh << " move mouse" << endl
+            << "num blobs found " << contourFinder.size() << ", fps: " << ofGetFrameRate() << endl
+            << "width of IP feed: " << grabber->getWidth() << endl
+            << "height of IP feed: " << grabber->getHeight() << endl
+            << "IP cam framerate: " << grabber->getFrameRate() << endl
+            << "URL: " << grabber->getURI() << endl;
+            ofDrawBitmapString(reportStr.str(), 20, 600);
+        
+        ofDrawBitmapString("Feed + Contour Tracking", 0, 500);
+        ofDrawBitmapString("Background Subtraction", 650, 500);
+    }
     
     
-    // finally, a report:
-	ofSetColor(0,255,0);
-	stringstream reportStr;
-        reportStr
-        << "press ' ' to show label viz" << endl
-        << "threshold " << backgroundThresh << " move mouse" << endl
-        << "num blobs found " << contourFinder.size() << ", fps: " << ofGetFrameRate() << endl
-        << "width of IP feed: " << grabber->getWidth() << endl
-        << "height of IP feed: " << grabber->getHeight() << endl
-        << "IP cam framerate: " << grabber->getFrameRate() << endl
-        << "URL: " << grabber->getURI() << endl;
-        ofDrawBitmapString(reportStr.str(), 20, 680);
-    
-    ofDrawBitmapString("Feed + Contour Tracking", 0, 500);
-    ofDrawBitmapString("Background Subtraction", 650, 500);
+    ofPushMatrix();
+    ofTranslate(boxSize, ofGetHeight()/2 - boxSize);
+    for(int i = 0; i < numLEDs; i++)
+    {
+        ofPushMatrix();
+        ofTranslate(boxSize*i, ofGetHeight()/2 - boxSize);
+        ofSetColor(brights[i]);
+        ofRect(0,0,boxSize, boxSize);
+        ofDrawBitmapString(ofToString(i), 0,0);
+        ofPopMatrix();
+        
+    }
+    ofPopMatrix();
     
     
 }
@@ -212,9 +270,10 @@ void testApp::draw() {
 
 //------------------------------------------------------------------------------
 void testApp::keyPressed(int key) {
-	if(key == ' ') {
-		showLabels = !showLabels;
-	}
+	if(key == ' ')
+    {
+        bShowVideos = !bShowVideos;
+    }
 }
 
 
